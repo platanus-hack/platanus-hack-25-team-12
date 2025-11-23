@@ -377,6 +377,33 @@
     }, 60000);
   }
 
+  // Attach event listeners to sidebar dynamic content
+  function attachEventListenersToSidebar() {
+    // Security details
+    const securityToggles = document.querySelectorAll(".pa-security-details-toggle");
+    securityToggles.forEach(toggle => {
+      toggle.addEventListener("click", function() {
+        this.parentElement.classList.toggle("pa-details-open");
+      });
+    });
+
+    // Reputation details
+    const reputationToggles = document.querySelectorAll(".pa-reputation-details-toggle");
+    reputationToggles.forEach(toggle => {
+      toggle.addEventListener("click", function() {
+        this.parentElement.classList.toggle("pa-details-open");
+      });
+    });
+
+    // Price comparison details
+    const priceToggles = document.querySelectorAll(".pa-price-toggle");
+    priceToggles.forEach(toggle => {
+      toggle.addEventListener("click", function() {
+        this.parentElement.classList.toggle("pa-price-open");
+      });
+    });
+  }
+
   // Open detailed sidebar with agent outputs
   function openDetailsSidebar(analysis) {
     const panel = document.getElementById("page-analyzer-panel");
@@ -386,6 +413,9 @@
 
     // Render detailed analysis
     content.innerHTML = renderDetailedAnalysis(analysis);
+    
+    // Attach event listeners to the new content
+    attachEventListenersToSidebar();
 
     // Show panel
     panel.classList.add("pa-open");
@@ -2159,7 +2189,7 @@
     if (hasDetails) {
       html += `
         <div class="pa-security-details-collapsible">
-          <button class="pa-security-details-toggle" onclick="this.parentElement.classList.toggle('pa-details-open')">
+          <button class="pa-security-details-toggle">
             <span>Ver detalles técnicos</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -2310,7 +2340,7 @@
     if (hasDetails) {
       html += `
         <div class="pa-reputation-details-collapsible">
-          <button class="pa-reputation-details-toggle" onclick="this.parentElement.classList.toggle('pa-details-open')">
+          <button class="pa-reputation-details-toggle">
             <span>Ver detalles completos</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
@@ -2417,7 +2447,7 @@
           💡 Encontramos este producto en ${priceData.comparisons.length} ${priceData.comparisons.length === 1 ? 'tienda' : 'tiendas'} más
         </div>
         <div class="pa-price-collapsible">
-          <button class="pa-price-toggle" onclick="this.parentElement.classList.toggle('pa-price-open')">
+          <button class="pa-price-toggle">
             <span>Ver ${priceData.comparisons.length} comparaciones</span>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="6 9 12 15 18 9"></polyline>
