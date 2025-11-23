@@ -14,7 +14,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from schemas import AnalysisRequest, AnalysisResult, RiskLevel, Flag, MarketplaceRequest, ScoreBreakdown
-from agents import ecommerce_guard_agent, reviews_agent
+from agents import ecommerce_guard_agent, reviews_agent, price_comparison_agent
 from marketplace_agents import (
     seller_trust_agent,
     pricing_agent,
@@ -88,15 +88,17 @@ async def analyze_page(request: AnalysisRequest):
     For now, frontend uses hardcoded messages that cycle automatically.
     """
     # Run agents in parallel
-    ai_res, reviews_res = await asyncio.gather(
+    ai_res, reviews_res, price_res = await asyncio.gather(
         ecommerce_guard_agent(request),
-        reviews_agent(request)
+        reviews_agent(request),
+        price_comparison_agent(request)
     )
 
     # Aggregate score contributions
     final_score = 100
     final_score -= ai_res.get("score_impact", 0)
     final_score -= reviews_res.get("score_impact", 0)
+    final_score -= price_res.get("score_impact", 0)
     final_score = max(0, min(100, final_score))
 
     risk_level, default_title = _assess_risk(final_score)
@@ -106,7 +108,8 @@ async def analyze_page(request: AnalysisRequest):
     # Collect agent outputs for detailed display
     agent_outputs = {
         "ecommerce_guard": ai_res,
-        "reviews": reviews_res
+        "reviews": reviews_res,
+        "price_comparison": price_res
     }
 
     return AnalysisResult(
@@ -114,8 +117,8 @@ async def analyze_page(request: AnalysisRequest):
         risk_level=risk_level,
         verdict_title=verdict_title,
         verdict_message=verdict_message,
-        flags=_collect_flags(ai_res, reviews_res),
-        details=_collect_details(ai_res, reviews_res),
+        flags=_collect_flags(ai_res, reviews_res, price_res),
+        details=_collect_details(ai_res, reviews_res, price_res),
         agent_outputs=agent_outputs
     )
 

@@ -1768,6 +1768,11 @@
     if (details.ai_analysis && Object.keys(details.ai_analysis).length > 0) {
       html += renderAIAnalysisDetails(details.ai_analysis);
     }
+    
+    // Render price comparison section if available (from price_comparison_agent)
+    if (details.checked) {
+      html += renderPriceComparisonSection(details);
+    }
 
     return html;
   }
@@ -2375,6 +2380,75 @@
       `;
     }
     
+    html += `</div>`;
+    return html;
+  }
+
+  // Render price comparison section with collapsible store cards
+  function renderPriceComparisonSection(priceData) {
+    if (!priceData || !priceData.checked) return '';
+
+    let html = `
+      <div class="pa-section pa-details-section pa-price-comparison-section">
+        <h3 class="pa-section-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="9" cy="21" r="1"/>
+            <circle cx="20" cy="21" r="1"/>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+          </svg>
+          Comparación de Precios
+        </h3>
+    `;
+
+    // Product name searched
+    if (priceData.product_name) {
+      html += `
+        <div class="pa-price-search-info">
+          <span class="pa-price-search-label">Producto buscado:</span>
+          <span class="pa-price-search-product">${escapeHtml(priceData.product_name)}</span>
+        </div>
+      `;
+    }
+
+    // Comparison results (collapsible)
+    if (priceData.comparisons && priceData.comparisons.length > 0) {
+      html += `
+        <div class="pa-price-summary">
+          💡 Encontramos este producto en ${priceData.comparisons.length} ${priceData.comparisons.length === 1 ? 'tienda' : 'tiendas'} más
+        </div>
+        <div class="pa-price-collapsible">
+          <button class="pa-price-toggle" onclick="this.parentElement.classList.toggle('pa-price-open')">
+            <span>Ver ${priceData.comparisons.length} comparaciones</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="pa-price-list">
+            ${priceData.comparisons.map(comparison => `
+              <div class="pa-price-card">
+                <div class="pa-price-card-header">
+                  <span class="pa-price-store">🏪 ${escapeHtml(comparison.store)}</span>
+                  ${comparison.url ? `<a href="${comparison.url}" target="_blank" class="pa-price-link">Ver producto ↗</a>` : ''}
+                </div>
+                ${comparison.title ? `<h4 class="pa-price-title">${escapeHtml(comparison.title)}</h4>` : ''}
+                <div class="pa-price-amount">
+                  <span class="pa-price-label">Precio:</span>
+                  <span class="pa-price-value">${escapeHtml(comparison.price_text)}</span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    } else if (priceData.checked) {
+      // No comparisons found
+      html += `
+        <div class="pa-price-empty">
+          <p>No encontramos este producto en otras tiendas en este momento.</p>
+        </div>
+      `;
+    }
+
     html += `</div>`;
     return html;
   }
