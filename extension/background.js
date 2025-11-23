@@ -191,6 +191,19 @@ async function extractSellerProfile(sellerUrl) {
       url: sellerUrl,
       active: false // Don't focus the tab
     }, (tab) => {
+      // Check for errors in tab creation
+      if (chrome.runtime.lastError) {
+        console.error('[BodyCart] Failed to create tab:', chrome.runtime.lastError.message);
+        resolve({ error: `Failed to create tab: ${chrome.runtime.lastError.message}` });
+        return;
+      }
+
+      if (!tab || !tab.id) {
+        console.error('[BodyCart] Tab creation returned invalid tab object');
+        resolve({ error: 'Tab creation returned invalid tab object' });
+        return;
+      }
+
       const tabId = tab.id;
       let resolved = false;
 
@@ -199,6 +212,7 @@ async function extractSellerProfile(sellerUrl) {
         if (!resolved) {
           resolved = true;
           chrome.tabs.remove(tabId).catch(() => {});
+          console.warn('[BodyCart] Timeout loading seller profile');
           resolve({ error: 'Timeout loading seller profile' });
         }
       }, 5000);
@@ -227,14 +241,17 @@ async function extractSellerProfile(sellerUrl) {
               chrome.tabs.remove(tabId).catch(() => {});
 
               if (results && results[0]?.result) {
+                console.log('[BodyCart] Successfully extracted seller data');
                 resolve(results[0].result);
               } else {
+                console.warn('[BodyCart] No data extracted from seller profile');
                 resolve({ error: 'No data extracted' });
               }
             } catch (error) {
               clearTimeout(timeout);
               resolved = true;
               chrome.tabs.remove(tabId).catch(() => {});
+              console.error('[BodyCart] Error extracting seller data:', error);
               resolve({ error: error.message });
             }
           }, 500); // Reduced from 1s - just enough for hydration
