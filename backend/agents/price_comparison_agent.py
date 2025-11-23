@@ -1,7 +1,7 @@
 import asyncio
 import os
 import re
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, Field
@@ -131,6 +131,55 @@ def extract_price_regex_fallback(content: str) -> Optional[int]:
         return min(reasonable_prices)
 
     # If all prices seem like installments, return None
+def parse_price(price_str: str) -> Optional[int]:
+    """
+    Parse a price string and return the numeric value.
+    Handles formats like: $1.029.990, $899.990, CLP 150.000, etc.
+    """
+    if not price_str:
+        return None
+
+    # Remove currency symbols and whitespace
+    cleaned = re.sub(r'[\$CLP\s]', '', price_str)
+    # Remove thousand separators (dots or commas)
+    cleaned = re.sub(r'[.,](?=\d{3})', '', cleaned)
+
+    try:
+        return int(cleaned)
+    except ValueError:
+        return None
+
+
+def extract_price_from_html(html_content: str) -> Optional[Tuple[str, int]]:
+    """
+    Try to extract the main product price from HTML content.
+    Returns tuple of (price_string, price_value) or None.
+    """
+    if not html_content:
+        return None
+
+    # Common price patterns in Chilean e-commerce
+    # Look for prices in common price containers
+    price_patterns = [
+        # JSON-LD structured data
+        r'"price":\s*"?(\d{1,3}(?:[.,]\d{3})*)"?',
+        # Meta tags
+        r'content="(\d{1,3}(?:[.,]\d{3})*)"[^>]*property="product:price:amount"',
+        # Common price formats with currency
+        r'[\$](\d{1,3}(?:\.\d{3})+)',
+        r'CLP\s*(\d{1,3}(?:\.\d{3})+)',
+        # Price in data attributes
+        r'data-price="(\d+)"',
+    ]
+
+    for pattern in price_patterns:
+        match = re.search(pattern, html_content)
+        if match:
+            price_str = match.group(1)
+            price_val = parse_price(price_str)
+            if price_val and price_val > 100:  # Filter out tiny values
+                return (f"${price_str}", price_val)
+
     return None
 
 
@@ -292,25 +341,58 @@ async def price_comparison_agent(request: AnalysisRequest) -> Dict[str, Any]:
 
         flags = []
         score_impact = 0
-        
+        price_verdict = None
+        price_verdict_detail = None
+
+        # Try to extract current site's price
+        current_price_data = extract_price_from_html(request.html_content)
+        current_price = current_price_data[1] if current_price_data else None
+        current_price_str = current_price_data[0] if current_price_data else None
+
+        if found_prices and current_price:
+            # Parse competitor prices and compare
+            competitor_prices = []
+            for fp in found_prices:
+                parsed = parse_price(fp["price_text"])
+                if parsed:
+                    competitor_prices.append(parsed)
+
+            if competitor_prices:
+                avg_price = sum(competitor_prices) / len(competitor_prices)
+                min_price = min(competitor_prices)
+                max_price = max(competitor_prices)
+
+                # Determine price verdict
+                if current_price <= min_price * 1.05:  # Within 5% of lowest
+                    price_verdict = "🟢 Buen precio"
+                    price_verdict_detail = f"Este precio ({current_price_str}) está entre los más bajos del mercado."
+                elif current_price <= avg_price * 1.1:  # Within 10% of average
+                    price_verdict = "🟡 Precio promedio"
+                    price_verdict_detail = f"Este precio ({current_price_str}) está dentro del rango normal del mercado."
+                else:
+                    price_verdict = "🔴 Precio alto"
+                    price_verdict_detail = f"Este precio ({current_price_str}) está por sobre el promedio. Encontramos opciones más baratas."
+                    flags.append(Flag(
+                        type="warning",
+                        msg=f"⚠️ Precio alto: encontramos el mismo producto desde ${min_price:,}".replace(",", ".")
+                    ))
+
+                logger.info(f"💰 [PRICE AGENT] Verdict: {price_verdict} (current: {current_price}, avg: {avg_price:.0f}, min: {min_price})")
+
         if found_prices:
-            # We found other stores selling potentially the same thing
-            # We don't strictly know if it's cheaper without complex parsing, 
-            # so we'll add an info flag.
-            
             flags.append(Flag(
                 type="info",
                 msg=f"💡 Encontramos este producto en otras {len(found_prices)} tiendas. ¡Compara precios!"
             ))
-            
-            # Maybe a small positive impact for finding alternatives? Or neutral.
-            # Let's keep it neutral for now unless we are sure it's cheaper.
-        
+
         return {
             "flags": flags,
             "details": {
                 "checked": True,
                 "product_name": product_name,
+                "current_price": current_price_str,
+                "price_verdict": price_verdict,
+                "price_verdict_detail": price_verdict_detail,
                 "comparisons": found_prices
             },
             "score_impact": score_impact
