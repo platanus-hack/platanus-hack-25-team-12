@@ -98,7 +98,6 @@ async def analyze_page(request: AnalysisRequest):
     final_score = 100
     final_score -= ai_res.get("score_impact", 0)
     final_score -= reviews_res.get("score_impact", 0)
-    final_score -= price_res.get("score_impact", 0)
     final_score = max(0, min(100, final_score))
 
     risk_level, default_title = _assess_risk(final_score)
