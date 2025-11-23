@@ -12,20 +12,20 @@ logger = logging.getLogger(__name__)
 
 class VisualSecurityCheck(BaseModel):
     phishing_detected: bool = Field(..., description="True if the site visually mimics a known brand but URL is different.")
-    phishing_reasoning: str = Field(..., description="Explicación en ESPAÑOL de por qué se sospecha phishing o no.")
+    phishing_reasoning: str = Field(..., description="Explanation IN SPANISH of why phishing is suspected or not.")
     purchase_button_present: bool = Field(..., description="True if a functional 'Buy', 'Add to Cart', or similar button is visible.")
-    purchase_reasoning: str = Field(..., description="Detalles en ESPAÑOL sobre el elemento de compra encontrado o faltante.")
+    purchase_reasoning: str = Field(..., description="Details IN SPANISH about the purchase element found or missing.")
 
 class HtmlSecurityCheck(BaseModel):
     """Combined iframe and CSRF security check"""
     iframe_risk_detected: bool = Field(..., description="True if iframes are missing sandbox or are too permissive.")
-    iframe_reasoning: str = Field(..., description="Detalles en ESPAÑOL sobre los iframes vulnerables encontrados.")
+    iframe_reasoning: str = Field(..., description="Details IN SPANISH on the vulnerable iframes found.")
     csrf_risk_detected: bool = Field(..., description="True if critical forms (login/payment) lack CSRF protection.")
-    csrf_reasoning: str = Field(..., description="Detalles en ESPAÑOL sobre los tokens CSRF faltantes.")
+    csrf_reasoning: str = Field(..., description="Details IN SPANISH on the missing CSRF tokens.")
 
 class PriceSecurityCheck(BaseModel):
     suspiciously_low_price: bool = Field(..., description="True if the identified price is absurdly low for the product description.")
-    reasoning: str = Field(..., description="Razonamiento en ESPAÑOL de por qué el precio es sospechoso o normal.")
+    reasoning: str = Field(..., description="Reasoning IN SPANISH for why the price is considered suspicious or normal.")
 
 # --- Extraction Helper ---
 
@@ -194,9 +194,10 @@ async def check_full_security(
         {
             "role": "system",
             "content": (
-                "Eres un experto en seguridad de e-commerce. Realiza un análisis multi-modal de esta página web. "
-                "Analiza los elementos visuales, la estructura HTML y la lógica de precios simultáneamente para detectar estafas, phishing o vulnerabilidades. "
-                "IMPORTANTE: Todas tus respuestas y explicaciones DEBEN estar en ESPAÑOL."
+                "You are an elite e-commerce security expert. Perform a multi-modal analysis of this webpage. "
+                "Analyze Visuals, HTML structure, and Pricing logic simultaneously to detect scams, phishing, or vulnerabilities. "
+                "IMPORTANT: All reasoning/explanation fields MUST be written IN SPANISH. "
+                "Respond ONLY with valid JSON matching the schema. No explanations outside the JSON."
             )
         },
         {

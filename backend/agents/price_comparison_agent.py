@@ -53,33 +53,28 @@ async def extract_price_with_llm(content: str, title: str, product_name: str) ->
     messages = [
         {
             "role": "system",
-            "content": """Eres un experto en extraer precios de productos de texto de sitios web de comercio electrónico.
+            "content": """You are a price extraction expert. Extract the CURRENT/SALE price from e-commerce text.
 
-Tu tarea es identificar el PRECIO ACTUAL/DE VENTA de un producto, NO:
-- El precio original tachado (antes del descuento)
-- El precio en cuotas/mensualidades (ej: "12 cuotas de $22.499")
-- Costos de envío
-- Otros precios no relacionados con el producto
+RULES:
+1. Extract the CURRENT price, NOT the original/crossed-out price
+2. Extract the FULL price, NOT installment/monthly payments (e.g., "12 cuotas de $22.499" - ignore $22.499)
+3. Chilean prices use dots as thousand separators (e.g., $269.990 = 269990)
+4. If discount shown (X% OFF), the current price is the LOWER one
+5. Return price as integer without separators
+6. If uncertain, set current_price to null
 
-REGLAS IMPORTANTES:
-1. El precio actual es generalmente el MÁS PROMINENTE y puede estar marcado como "oferta", "ahora", "precio actual", o simplemente ser el precio no tachado
-2. Si ves "X% OFF" o "descuento", el precio actual es el MENOR, no el original
-3. Las cuotas/mensualidades suelen mencionarse como "en X cuotas de $Y" - ignora $Y y busca el precio total
-4. Los precios chilenos usan puntos como separador de miles (ej: $269.990 = 269990)
-5. Si no puedes determinar el precio actual con confianza, devuelve null
-
-Devuelve el precio como número entero sin separadores."""
+IMPORTANT: Respond ONLY with valid JSON. No explanations, no text before or after the JSON."""
         },
         {
             "role": "user",
-            "content": f"""Producto buscado: {product_name}
+            "content": f"""Product: {product_name}
 
-Título del resultado: {title}
+Title: {title}
 
-Contenido de la página:
+Page content:
 {content_truncated}
 
-Extrae el PRECIO ACTUAL (no el original, no cuotas) del producto."""
+Extract the CURRENT price (not original, not installments)."""
         }
     ]
 
