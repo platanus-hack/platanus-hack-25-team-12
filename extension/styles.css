@@ -1444,7 +1444,7 @@
 }
 
 .pa-reviews-open .pa-reviews-list {
-  max-height: 1000px;
+  max-height: none;
 }
 
 .pa-review-card {
@@ -1710,7 +1710,7 @@
 }
 
 .pa-price-comparison-open .pa-price-comparison-list {
-  max-height: 1000px;
+  max-height: none;
 }
 
 .pa-price-comparison-card {
@@ -1838,7 +1838,7 @@
 }
 
 .pa-price-open .pa-price-list {
-  max-height: 1000px;
+  max-height: none;
 }
 
 .pa-price-card {
@@ -2070,7 +2070,7 @@
 }
 
 .pa-security-details-collapsible.pa-details-open .pa-security-details-content {
-  max-height: 1000px;
+  max-height: none;
   padding-top: 16px;
 }
 
@@ -2305,7 +2305,7 @@
 }
 
 .pa-reputation-reviews-collapsible.pa-reviews-open .pa-reputation-reviews-list {
-  max-height: 2000px;
+  max-height: none;
   padding-top: 12px;
 }
 
@@ -2395,7 +2395,7 @@
 }
 
 .pa-reputation-details-collapsible.pa-details-open .pa-reputation-details-content {
-  max-height: 500px;
+  max-height: none;
   padding-top: 12px;
 }
 
