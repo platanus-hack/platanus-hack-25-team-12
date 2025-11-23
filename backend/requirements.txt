@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+anthropic
+python-whois
+python-dotenv
+pydantic
+tavily-python
+
+# Optional: Advanced scraping (for backend-based scraping)
+# Install with: pip install playwright && playwright install chromium
+# playwright
+
