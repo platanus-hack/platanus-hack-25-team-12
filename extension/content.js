@@ -1049,18 +1049,23 @@
     const panel = document.createElement("div");
     panel.id = "page-analyzer-panel";
 
-    // Inline SVG logo (shield icon) - more reliable than external image
-    const logoSVG = `
-      <svg class="pa-header-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-        <path d="M9 12l2 2 4-4" stroke-linecap="round" stroke-linejoin="round"/>
+    // Get logo image URL from extension
+    const logoURL = chrome.runtime.getURL("icons/logo_cropped_white.png");
+
+    // Arrow icon for the handle (chevron right)
+    const handleArrowSVG = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <polyline points="9 18 15 12 9 6"/>
       </svg>
     `;
 
     panel.innerHTML = `
+      <div class="pa-panel-handle" id="pa-panel-handle" title="Cerrar panel">
+        ${handleArrowSVG}
+      </div>
       <div class="pa-panel-header">
         <div class="pa-header-title">
-          ${logoSVG}
+          <img src="${logoURL}" alt="BodyCart" class="pa-header-logo">
           <h2>BodyCart</h2>
         </div>
         <button id="pa-close-btn" title="Cerrar">&times;</button>
@@ -2863,6 +2868,13 @@
     closeBtn.addEventListener("click", () => {
       panel.classList.remove("pa-open");
       updateVisibility(); // Check if button should be shown
+    });
+
+    // Panel handle click - toggle panel open/close
+    const panelHandle = document.getElementById("pa-panel-handle");
+    panelHandle.addEventListener("click", () => {
+      panel.classList.toggle("pa-open");
+      updateVisibility();
     });
 
     // Close panel on Escape key

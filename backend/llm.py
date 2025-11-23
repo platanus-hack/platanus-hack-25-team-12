@@ -119,7 +119,7 @@ async def call_structured_llm(
             if system_messages:
                 system_msg = "\n\n".join(system_messages) + schema_instruction
             else:
-                system_msg = "You are a helpful AI assistant." + schema_instruction
+                system_msg = "Eres un asistente de IA útil. Siempre responde en español." + schema_instruction
             
             response = await client.messages.create(
                 model=model,
