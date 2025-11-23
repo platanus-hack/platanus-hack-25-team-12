@@ -1,4 +1,5 @@
 {
   "project-name": "BodyCart",
-  "project-description-spanish": "BodyCart es una extensión de navegador que analiza sitios web de comercio electrónico para detectar estafas, dropshipping, phising y mejores precios antes de comprar."
+  "project-description-spanish": "BodyCart es una extensión de navegador que analiza sitios web de comercio electrónico para detectar estafas, dropshipping, phising y mejores precios antes de comprar.",
+  "deploy-url": "https://backend-summer-sunset-6933.fly.dev/"
 }
