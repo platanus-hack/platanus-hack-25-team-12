@@ -449,7 +449,6 @@
     // Facebook uses role="dialog" for modals
     const dialog = document.querySelector('[role="dialog"]');
     if (dialog) {
-      console.log("[BodyCart] Found modal dialog container");
       return dialog;
     }
 
@@ -479,7 +478,6 @@
             // Verify it has price info
             const hasPrice = container.textContent.match(/\$|USD|CLP|gratis|free/i);
             if (hasPrice) {
-              console.log("[BodyCart] Found product container via seller link");
               return container;
             }
           }
@@ -504,7 +502,6 @@
 
             // Good container: has price but NOT suggestions text
             if (hasPrice && !hasSuggestionsInside) {
-              console.log("[BodyCart] Found product container (before suggestions)");
               return div;
             }
           }
@@ -533,18 +530,15 @@
         const hasPrice = el.textContent.match(/\$|USD|CLP|gratis|free/i);
         const hasSuggestionsInside = /también te puede|you might also|productos similares|similar items/i.test(el.textContent);
         if (hasPrice && !hasSuggestionsInside) {
-          console.log("[BodyCart] Found product container (viewport-based)");
           return el;
         }
       }
 
-      // Fallback to main content but log warning
-      console.warn("[BodyCart] Using main content - suggestions may be included");
+      // Fallback to main content
       return mainContent;
     }
 
     // Strategy 3: Fallback to document
-    console.warn("[BodyCart] Could not find specific container, using document");
     return document;
   }
 
@@ -585,8 +579,6 @@
 
     if (dialog) {
       // In modal mode - scroll within the modal if needed
-      console.log("[BodyCart] Scrolling within modal dialog");
-
       // Find scrollable container within the modal
       const modalScrollContainer = dialog.querySelector('[style*="overflow"]') ||
                                    dialog.querySelector('[class*="scroll"]') ||
@@ -612,7 +604,6 @@
         modalScrollContainer.scrollTop = originalScrollTop;
       }
 
-      console.log("[BodyCart] Modal scroll completed");
       return;
     }
 
@@ -683,8 +674,6 @@
     } else {
       scrollContainer.scrollTop = originalScrollTop;
     }
-
-    console.log("[BodyCart] Silent scroll completed");
   }
 
   // ============================================
@@ -697,10 +686,6 @@
         { type: "EXTRACT_SELLER_PROFILE", url: sellerUrl },
         (response) => {
           if (chrome.runtime.lastError) {
-            console.error(
-              "[BodyCart] Seller extraction error:",
-              chrome.runtime.lastError
-            );
             resolve(null);
           } else {
             resolve(response);
@@ -715,7 +700,6 @@
   // ============================================
 
   async function deepInvestigateMarketplace() {
-    console.log("[BodyCart] Starting optimized deep investigation...");
     const startTime = performance.now();
 
     // Check if we're in modal (skip scroll if so - content is already loaded)
@@ -724,8 +708,6 @@
     // Step 1: Only scroll if NOT in modal (modal has content pre-loaded)
     if (!isModal) {
       await silentScroll();
-    } else {
-      console.log("[BodyCart] Modal detected - skipping scroll");
     }
 
     // Step 2: Run screenshot + initial data extraction in PARALLEL
@@ -739,7 +721,6 @@
     // This runs while we already have enough data to proceed
     let sellerProfilePromise = null;
     if (listingData.seller?.profile_url) {
-      console.log("[BodyCart] Fetching seller profile in parallel");
       sellerProfilePromise = extractSellerProfileFromBackground(
         listingData.seller.profile_url
       );
@@ -761,15 +742,13 @@
           };
         }
       } catch (e) {
-        console.log("[BodyCart] Seller profile fetch failed, continuing without it");
+        // Seller profile fetch failed, continuing without it
       }
     }
 
     // Add screenshot to data
     listingData.screenshot_base64 = screenshot;
 
-    const elapsed = Math.round(performance.now() - startTime);
-    console.log(`[BodyCart] Deep investigation complete in ${elapsed}ms:`, listingData);
     return listingData;
   }
 
@@ -782,7 +761,6 @@
 
     // Find the correct container
     const container = findProductContainer();
-    console.log("[BodyCart] Fast scraping within:", container.tagName || "document");
 
     // Reuse the main collection logic but scoped to container
     const getText = (selector) => {
@@ -840,7 +818,6 @@
       });
 
       price = priceCandidates[0].text;
-      console.log(`[BodyCart] Price candidates: ${priceCandidates.length}, selected: "${price}" (fontSize: ${priceCandidates[0].fontSize}px, top: ${priceCandidates[0].top}px)`);
     }
 
     // === TITLE DETECTION ===
@@ -1121,7 +1098,6 @@
       protocol: window.location.protocol,
     };
 
-    console.log("[Page Analyzer] Scraping complete:", pageData);
     return pageData;
   }
 
@@ -1135,7 +1111,6 @@
     // Find the correct container (modal or main listing area)
     // This prevents scraping the background feed or suggestions
     const container = findProductContainer();
-    console.log("[BodyCart] Scraping within container:", container.tagName || "document");
 
     // Helper to safely get text content within container
     const getText = (selector) => {
@@ -1148,8 +1123,6 @@
     // Get all text elements within the container only
     const allSpans = queryInContainer(container, "span");
     const allDivs = queryInContainer(container, "div");
-
-    console.log(`[BodyCart] Found ${allSpans.length} spans and ${allDivs.length} divs in container`);
 
     // ============================================
     // PRICE DETECTION - Multiple formats
@@ -1637,7 +1610,6 @@
       seller_other_listings: [],
     };
 
-    console.log("[Page Analyzer] Marketplace data collected:", marketplaceData);
     return marketplaceData;
   }
 
@@ -1650,33 +1622,19 @@
           { type: "CAPTURE_SCREENSHOT" },
           (response) => {
             if (chrome.runtime.lastError) {
-              console.error(
-                "[Page Analyzer] Runtime error:",
-                chrome.runtime.lastError.message
-              );
               resolve(null);
               return;
             }
 
             if (response && response.screenshot) {
-              console.log("[Page Analyzer] Screenshot captured successfully");
               resolve(response.screenshot);
             } else {
-              const errorMsg = response?.error || "Unknown error";
-              console.warn(
-                "[Page Analyzer] Screenshot capture failed:",
-                errorMsg
-              );
-              console.warn(
-                "[Page Analyzer] This may be due to missing permissions. Check manifest.json for host_permissions."
-              );
               resolve(null);
             }
           }
         );
       });
     } catch (error) {
-      console.error("[Page Analyzer] Screenshot error:", error);
       return null;
     }
   }
@@ -2749,8 +2707,6 @@
         // Show mini result notification
         showResultNotification(analysis.risk_level, analysis);
       } catch (error) {
-        console.error("[BodyCart] Auto-analysis error:", error);
-
         // Hide loading progress
         hideLoadingProgress();
 

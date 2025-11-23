@@ -2,11 +2,7 @@
 
 // Extension installed
 chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === 'install') {
-    console.log('BodyCart extension installed');
-  } else if (details.reason === 'update') {
-    console.log('BodyCart extension updated');
-  }
+  // Extension installed or updated
 });
 
 // Function to extract seller data from seller profile page
@@ -184,7 +180,6 @@ function extractSellerDataFromPage() {
   // Cap profile completeness at 100
   data.profile_completeness = Math.min(100, data.profile_completeness);
 
-  console.log('[BodyCart] Seller data extracted:', data);
   return data;
 }
 
@@ -260,11 +255,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       { format: 'png', quality: 80 },
       (dataUrl) => {
         if (chrome.runtime.lastError) {
-          console.error('[BodyCart] Screenshot capture failed:', chrome.runtime.lastError.message);
-          console.error('[BodyCart] Ensure host_permissions are granted in manifest.json');
           sendResponse({ screenshot: null, error: chrome.runtime.lastError.message });
         } else {
-          console.log('[BodyCart] Screenshot captured successfully');
           // Extract base64 data (remove "data:image/png;base64," prefix)
           const base64 = dataUrl.split(',')[1];
           sendResponse({ screenshot: base64 });
